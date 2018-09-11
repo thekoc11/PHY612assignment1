@@ -9,9 +9,9 @@ var T = []; var TVV = [];
 
 function setup(){
   createCanvas(windowWidth, windowHeight, WEBGL);
-  b = Box.create(200, 50, 0.3, 0.0001);
+  b = Box.create(200, 50, 0.3, 0.01);
   // b.updateVelocityVerlet();
-  while(t<30){
+  while(t<100){
       time.push(t);
   b.updateVerlet();
   b.calcTotalForce();
@@ -28,7 +28,7 @@ function setup(){
   t++;
   }
   t = 0;
-while(t<30){
+while(t<100){
   timeVV.push(t);
   b.updateVelocityVerlet();
   b.calcTotalForce();
