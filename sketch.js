@@ -197,31 +197,3 @@ var VVdata = [VVdata1, VVdata2, VVdata3];
 
 }
 
-function plotData(){
-  var dist = [[]]
-  for (var i = 0; i < p.length; i+=1){
-    dist.push([]);
-    for(var j = 0; j < p.length; j+=1){
-      if(i == j){
-	dist[i].push(0); 	
-      }
-      else{
-        dist[i].push(p[i].distanceTo(p[j]));	
-      }
-      x_data.push(i);
-      y_data.push(j);
-      z_data.push(dist[i][j]);
-    }
-    
-  }
-  console.log(x_data.length, y_data.length, z_data.length);
-  var data = [{
-	     x: x_data,
-             y: y_data,
-             z: z_data,
-             type: 'scatter3d'  
-  }];
-  var layout = {};
-
-  Plotly.newPlot('myDiv', data, layout);
-}
