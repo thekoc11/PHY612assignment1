@@ -1,16 +1,49 @@
-var p = []; //Array of particles
-var tempP = Particle.create(0, 0, 0);
-var _dist = 0.0;//distance between two particles
-var c = 0;
-var noOfParticles = 50;
-var x_data = [], y_data = [], z_data = [];
-var fs = 0.0;
-var dt = 0.01;
-var Xp = [];
+
+
+var b;
+
+var time = [], t = 0, timeVV = [];
+var Fx = [], FxVV = [], Fy = [], FyVV = [], Fz = [], FzVV = [];
+var Px = [], Py = [], Pz = []; var PxVV = [], PyVV = [], PzVV = [];
+var T = []; var TVV = [];
 
 function setup(){
   createCanvas(windowWidth, windowHeight, WEBGL);
-  main();//function where all the magic happens
+  b = Box.create(200, 50, 0.3, 0.01);
+  // b.updateVelocityVerlet();
+  while(t<30){
+      time.push(t);
+  b.updateVerlet();
+  b.calcTotalForce();
+  Fx.push(b.TotalFx);
+  // console.log("Total FX is", b.TotalFx);
+  Fy.push(b.TotalFy);
+  Fz.push(b.TotalFz);
+  b.calcTotalMomentum();
+  Px.push(b.TotalMomentumX);
+  Py.push(b.TotalMomentumY);
+  Pz.push(b.TotalMomentumZ);
+  b.calcTemperature();
+  T.push(b.temperature);
+  t++;
+  }
+  t = 0;
+while(t<30){
+  timeVV.push(t);
+  b.updateVelocityVerlet();
+  b.calcTotalForce();
+  FxVV.push(b.TotalFx);
+  FyVV.push(b.TotalFy);
+  FzVV.push(b.TotalFz);
+  b.calcTotalMomentum();
+  PxVV.push(b.TotalMomentumX);
+  PyVV.push(b.TotalMomentumY);
+  PzVV.push(b.TotalMomentumZ);
+  b.calcTemperature();
+  TVV.push(b.temperature);
+  t++;
+  }
+  plot();
 }
 
 function draw(){
@@ -20,85 +53,148 @@ function draw(){
   stroke(255);
   // pushMatrix();
   // noStroke();
-  box(200);//a cube of side 200
+  box(b.size);//a cube of side 200
   // popMatrix();
 
 
   noStroke();
   fill(255);
 
-  for(var i = 0; i < p.length; i+= 1){
+  for(var i = 0; i < b.p.length; i+= 1){
     push();//reset the pointer, bring it back to origin
-    translate(p[i].getX(), p[i].getY(), p[i].getZ());
-    sphere(p[i].radius);
+    translate(b.p[i].x, b.p[i].y, b.p[i].z);
+    sphere(b.p[i].radius);
     pop();
   }
-}
-
-function main(){
-  while(p.length < noOfParticles){
-    tempP = Particle.create((Math.random()*2 - 1/*generatees a random number between -1, 1*/) * 100, (Math.random()*2 - 1) * 100, (Math.random()*2 - 1) * 100);
-    var l = p.length;
-    if(l != 0){
-      for(var j = 0; j < l; j+=1){
-        _dist = tempP.distanceTo(p[j]);
-        //console.log("the value of dist is ", _dist);
-        if(_dist < 2*p[j].radius){
-          c = c+1;
-        }
-      }
-    }
-    //console.log("The valur of C is ", c);
-    if(c == 0){
-      //console.log("The X, Y, Z spawn points are", tempP.getX(), tempP.getY(), tempP.getZ());
-      p.push(tempP);
-      //console.log("length of tye array is", p.length);
-    }
-    c = 0;
-  }
+  b.updateVerlet();
   
-  var T = calcTemp();
-  scaleVelocity(fs);
-  console.log("Temperature of the system is: ", T);
-  Update(dt);
-  plotData();
+  //requestAnimationFrame(draw);
 }
 
-function calcTemp(){
-  var l = p.length;
-  var K = []; var sum = 0;
-  for ( var i = 0; i < l; i += 1 ){
-    K.push(p[i].getKE());
-    sum = sum + p[i].getKE();
-  }
-  sum = sum/l;
-  var T = sum * (2/3);
-  fs = Math.sqrt(3 * T / sum);
-  return T;
-	
-}
+function plot() {
+  var data1 = {
+    x: time,
+    y: Fx,
+    type: 'scatter',
+    mode: 'lines',
+    name: 'Total Force in X'
+  };
+  var data2 = {
+    x: time,
+    y: Fy,
+    type: 'scatter',
+    mode: 'lines',
+    name: 'Total Force in Y'
+  };
+  var data3 = {
+    x: time,
+    y: Fz,
+    type: 'scatter',
+    mode: 'lines',
+    name: 'Total Force in Z'
+  };
 
-function scaleVelocity(fs){
-  var l = p.length;
-  var sumX = 0, sumY = 0, sumZ = 0;
-  for(var i = 0; i < l; i+=1){
-    sumX = sumX + p[i].getVx()
-    sumY = sumY + p[i].getVy()
-    sumZ = sumZ + p[i].getVz()
-  }
-  console.log("The sum of Momentums are", sumX, sumY, sumZ);
-  for(var i = 0; i < l; i+=1){
-    p[i].vx = (p[i].vx - sumX/l) * fs;
-    p[i].vy = (p[i].vy - sumY/l) * fs;
-    p[i].vy = (p[i].vz - sumZ/l) * fs;
-  }
-}
+  var mdata1 = {
+    x: time,
+    y: Px,
+    type: 'scatter',
+    mode: 'lines',
+    name: 'Total momentum in X'
+  };
+  var mdata2 = {
+    x: time,
+    y: Py,
+    type: 'scatter',
+    mode: 'lines',
+    name: 'Total momentum in Y'
+  };
+  var mdata3 = {
+    x: time,
+    y: Pz,
+    type: 'scatter',
+    mode: 'lines',
+    name: 'Total momentum in Z'
+  };
+  var tdata1 = {
+    x: time,
+    y: T,
+    type: 'scatter',
+    mode: 'lines',
+    name: 'Temperature'
+  };
 
-function Update(dt){
-  var l = p.length;
-  for(var  i = 0; i < l; i++){
-    Xp.push(p[i].getX() - p[i].getVx()*dt);
-  }
+  var data = [data1, data2, data3];
+  var mdata = [mdata1, mdata2, mdata3];
+  var tdata = [tdata1];
+  var layout = {};
+
+  Plotly.newPlot('myDiv1', data, layout);
+  Plotly.newPlot('myDiv2', mdata, layout);
+  Plotly.newPlot('myDiv3', tdata, layout);
+
+  var VVdata1 = {
+    x: timeVV,
+    y: FxVV,
+    type: 'scatter',
+    mode: 'lines',
+    name: 'Velocity Verlet Total Force in X'
+  };
+
+  var VVdata2 = {
+    x: timeVV,
+    y: FyVV,
+    type: 'scatter',
+    mode: 'lines',
+    name: 'Velocity Verlet Total Force in Y'
+  };
+  var VVdata3 = {
+    x: timeVV,
+    y: FzVV,
+    type: 'scatter',
+    mode: 'lines',
+    name: 'Velocity Verlet Total Force in Z'
+  };
+
+var VVdata = [VVdata1, VVdata2, VVdata3];
+
+  var VVmdata1 = {
+    x: timeVV,
+    y: PxVV,
+    type: 'scatter',
+    mode: 'lines',
+    name: 'Velocity Verlet Total Momentum in X'
+  };
+  var VVmdata2 = {
+    x: timeVV,
+    y: PyVV,
+    type: 'scatter',
+    mode: 'lines',
+    name: 'Velocity Verlet Total Momentum in Y'
+  };
+  var VVmdata3 = {
+    x: timeVV,
+    y: PzVV,
+    type: 'scatter',
+    mode: 'lines',
+    name: 'Velocity Verlet Total Momentum in Z'
+  };
+
+  var VVmdata = [VVmdata1, VVmdata2, VVmdata3];
+
+  var VVtdata1 = {
+    x: timeVV,
+    y: TVV,
+    type: 'scatter',
+    mode: 'lines',
+    name: 'Velocity Verlet Temperature'
+  };  
+
+  var VVtdata = [VVtdata1];
+
+  Plotly.newPlot('myDivP1', VVdata, layout);
+  Plotly.newPlot('myDivP2', VVmdata, layout);
+  Plotly.newPlot('myDivP3', VVtdata, layout);
+
 }
 
 function plotData(){
