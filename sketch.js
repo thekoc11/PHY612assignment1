@@ -9,41 +9,41 @@ var T = []; var TVV = [];
 
 function setup(){
   createCanvas(windowWidth, windowHeight, WEBGL);
-  b = Box.create(200, 50, 0.3, 0.01);
+  b = Box.create(200, 50, 0.3, 0.1);//boxlength, noOfParticles, initialTemp, dt
   // b.updateVelocityVerlet();
-  while(t<100){
-      time.push(t);
-  b.updateVerlet();
-  b.calcTotalForce();
-  Fx.push(b.TotalFx);
-  // console.log("Total FX is", b.TotalFx);
-  Fy.push(b.TotalFy);
-  Fz.push(b.TotalFz);
-  b.calcTotalMomentum();
-  Px.push(b.TotalMomentumX);
-  Py.push(b.TotalMomentumY);
-  Pz.push(b.TotalMomentumZ);
-  b.calcTemperature();
-  T.push(b.temperature);
-  t++;
-  }
-  t = 0;
-while(t<100){
-  timeVV.push(t);
-  b.updateVelocityVerlet();
-  b.calcTotalForce();
-  FxVV.push(b.TotalFx);
-  FyVV.push(b.TotalFy);
-  FzVV.push(b.TotalFz);
-  b.calcTotalMomentum();
-  PxVV.push(b.TotalMomentumX);
-  PyVV.push(b.TotalMomentumY);
-  PzVV.push(b.TotalMomentumZ);
-  b.calcTemperature();
-  TVV.push(b.temperature);
-  t++;
-  }
-  plot();
+  // while(t<300){
+  //     time.push(t);
+  // b.updateVerlet();
+  // b.calcTotalForce();
+  // Fx.push(b.TotalFx);
+  // // console.log("Total FX is", b.TotalFx);
+  // Fy.push(b.TotalFy);
+  // Fz.push(b.TotalFz);
+  // b.calcTotalMomentum();
+  // Px.push(b.TotalMomentumX);
+  // Py.push(b.TotalMomentumY);
+  // Pz.push(b.TotalMomentumZ);
+  // b.calcTemperature();
+  // T.push(b.temperature);
+  // t++;
+  // }
+//   t = 0;
+// while(t<100){
+//   timeVV.push(t);
+//   b.updateVelocityVerlet();
+//   b.calcTotalForce();
+//   FxVV.push(b.TotalFx);
+//   FyVV.push(b.TotalFy);
+//   FzVV.push(b.TotalFz);
+//   b.calcTotalMomentum();
+//   PxVV.push(b.TotalMomentumX);
+//   PyVV.push(b.TotalMomentumY);
+//   PzVV.push(b.TotalMomentumZ);
+//   b.calcTemperature();
+//   TVV.push(b.temperature);
+//   t++;
+//   }
+//  plot();
 }
 
 function draw(){
@@ -62,12 +62,26 @@ function draw(){
 
   for(var i = 0; i < b.p.length; i+= 1){
     push();//reset the pointer, bring it back to origin
-    translate(b.p[i].x, b.p[i].y, b.p[i].z);
+    translate(b.p[i].xp, b.p[i].yp, b.p[i].zp);
     sphere(b.p[i].radius);
     pop();
   }
+  time.push(t);
   b.updateVerlet();
-  
+  b.calcTotalForce();
+  Fx.push(b.TotalFx);
+  // console.log("Total FX is", b.TotalFx);
+  Fy.push(b.TotalFy);
+  Fz.push(b.TotalFz);
+  b.calcTotalMomentum();
+  Px.push(b.TotalMomentumX);
+  Py.push(b.TotalMomentumY);
+  Pz.push(b.TotalMomentumZ);
+  b.calcTemperature();
+  T.push(b.temperature);
+  t++;
+
+  plot();
   //requestAnimationFrame(draw);
 }
 

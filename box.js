@@ -25,7 +25,7 @@ var Box = {
 		    var l = obj.p.length;
 		    if(l != 0){
 		      for(var j = 0; j < l; j+=1){
-		        _dist = tempP.distanceTo(obj.p[j]);
+		        _dist = tempP.distanceTo(obj.p[j], obj.size);
 		        if(_dist < 2*obj.p[j].radius){
 		          c = c+1;
 		        }
@@ -36,19 +36,31 @@ var Box = {
 		    }
 		    c = 0;
 		}
-		var _v = 0, _p = 0;
+		var _vx = 0, _vy = 0, _vz = 0, _px = 0, _py = 0, _pz = 0, _p = 0;
 		for (var i = 0; i < obj.p.length; i++) {
-		 	_v = _v + obj.p[i].getVelocity();
+		 	_vx = _vx + obj.p[i].vx;
+		 	_vy = _vy + obj.p[i].vy;
+		 	_vz = _vz + obj.p[i].vz;
+		 	//console.log("Particle Velocity", obj.p[i].getVelocity());
 		 	_p = _p + obj.p[i].mass*obj.p[i].getVelocity();
 		}
 
-		_v = _v/obj.p.length;
+		_vx = _vx/obj.p.length;
+		_vy = _vy/obj.p.length;
+		_vz = _vz/obj.p.length;
+
+		var _v = Math.sqrt(_vx**2 + _vy**2 + _vz**2);
 		obj.vCOM = _v;
 		_p = _p/obj.p.length;
 		obj.TotalMomentum = _p;
 		var totvsquared = 0;
 		for (var i = 0; i < obj.p.length; i++) {
-			obj.p[i].normaliseVelocity(obj.vCOM);
+			
+			obj.p[i].vx = obj.p[i].vx - _vx;
+			obj.p[i].vy = obj.p[i].vy - _vy;
+			obj.p[i].vz = obj.p[i].vz - _vz;
+
+			//obj.p[i].normaliseVelocity(obj.vCOM);
 			totvsquared = totvsquared + obj.p[i].getVelocitySquare();
 		}
 		totvsquared = totvsquared/obj.p.length;
@@ -56,12 +68,14 @@ var Box = {
 		obj.scalingFactor = (initialTemp/ obj.temperature);
 
 		for (var i = 0; i < obj.p.length; i++) {
-			obj.p[i].rescaleVelocity(obj.scalingFactor);
+			obj.p[i].rescaleVelocity(obj.scalingFactor*200);
+			// console.log("Current rescaled velocities are ", obj.p[i].vx, obj.p[i].vy, obj.p[i].vz);
+
 		}
 
 		obj.DeltaT = DeltaT;
 		for (var i = 0; i < obj.p.length; i++) {
-			obj.p[i].calcPreviousPosition(obj.DeltaT);
+			obj.p[i].calcPreviousPosition(obj.DeltaT, obj.size);
 			// console.log("Xp values", obj.p[i].xp)
 
 		}
@@ -95,6 +109,7 @@ var Box = {
 	calcTemperature: function() {
 		var totvsquared = 0;
 		for (var i = 0; i < this.p.length; i++) {
+
 			totvsquared = totvsquared + this.p[i].getVelocitySquare();
 		}
 		this.temperature = totvsquared/3.0;
@@ -108,16 +123,18 @@ var Box = {
 				// console.log("distcance is", x);
 				this.p[i].calcForce(this.p[j], this.sigma, this.epsilon, this.size);
 			}
+			//TODO: Check total Collision
+			this.p[i].updateVerlet(this.DeltaT, this.size);
+			for(var j = 0; j < this.p.length; j++){
+				this.p[i].isForceCalculated[this.p[i].index][this.p[j].index] = false;
+			}
+			// this.p[i].display();
+
 		}
 		for (var i = 0; i < this.p.length; i++) {
-			this.p[i].updateVerlet(this.DeltaT, this.size);
 			// console.log("Particle accelaration", this.p[i].ax);
 		}
-				for (var i = 0; i < this.p.length; i++) {
-			for (var j = 0; j < this.p.length; j++) {
-				var x = this.p[i].distanceTo(this.p[j], this.size);
-			}
-		}
+		
 	},
 
 	updateVelocityVerlet: function() {

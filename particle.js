@@ -23,7 +23,8 @@ var Particle = {
   azp: 0,
   _x: 0,
   _y: 0,
-  _z: 0, 
+  _z: 0,
+  isForceCalculated: [[]], 
 
   create: function(x, y, z, i){
     var obj = Object.create(this);
@@ -36,6 +37,13 @@ var Particle = {
     obj.KE = obj.vx**2 + obj.vy**2 + obj.vz**2;
     obj.xp = -Infinity; obj.yp = -Infinity; obj.zp = -Infinity;
     obj.index = i;
+    
+    for(var i = 0; i < 100; i++){
+      obj.isForceCalculated.push([]);
+      for(var j = 0; j < 100; j++){
+        obj.isForceCalculated[i].push(false);
+      }
+    }
     return obj;
   },
 
@@ -97,15 +105,20 @@ var Particle = {
     _y = _y - boxLength * Math.floor(_y/boxLength);
     _z = _z - boxLength * Math.floor(_z/boxLength);	
     var dist = Math.sqrt(_x**2 + _y**2 + _z**2);
+    // console.log("distance between particles", _x, _y, _z);
+
     this._x = _x; this._y = _y; this._z = _z;
     return dist;
   },
   
   updateVerlet: function(t, boxLength){
     var xtemp = this.x, ytemp = this.y, ztemp = this.z;
+    // console.log("Current positions before verlet update are ", this.x, this.y, this.z);
+
     this.setX(2*this.x - this.xp + this.ax*t**2);
     this.setY(2*this.y - this.yp + this.ay*t**2);
     this.setZ(2*this.z - this.zp + this.az*t**2);
+    // console.log("Current positions are ", this.x, this.y, this.z);
 
     this.vx = (this.x - this.xp)/2*t;
     this.vy = (this.y - this.yp)/2*t;
@@ -114,6 +127,7 @@ var Particle = {
     this.xp = xtemp;
     this.yp = ytemp;
     this.zp = ztemp;
+    // console.log("Current velocities are ", this.vx, this.vy, this.vz);
 
     this.boundaryCheck(boxLength);
 
@@ -171,6 +185,8 @@ var Particle = {
     this.vz = this.vz * scalingFactor;
   },
   calcPreviousPosition: function(DeltaT, boxLength){
+    // console.log("Current positions are ", this.x, this.y, this.z);
+
     this.xp = this.x - this.vx * DeltaT;
     this.yp = this.y - this.vy * DeltaT;
     this.zp = this.z - this.vz * DeltaT;
@@ -186,38 +202,68 @@ var Particle = {
       this.zp = this.zp + boxLength;
     else if (this.zp > boxLength/2)
       this.zp = this.zp - boxLength;
+
+      // console.log("Current previous positions are ", this.xp, this.yp, this.zp, boxLength/2);
+
+
   },
 
   calcForce: function(p2, sigma, epsilon, boxLength){
-      var X = p2.getX(), Y = p2.getY(), Z = p2.getZ();
+    var dist = 0;
+    if(p2.index == this.index)
+     { dist = Infinity;}
+   else{
+    var X = p2.getX(), Y = p2.getY(), Z = p2.getZ();
     var x = this.x, y = this.y, z = this.z;
     var _x = X - x, _y = Y - y, _z = Z - z;
     _x = _x - boxLength * Math.floor(_x/boxLength);
     _y = _y - boxLength * Math.floor(_y/boxLength);
     _z = _z - boxLength * Math.floor(_z/boxLength); 
-    var dist = Math.sqrt(_x**2 + _y**2 + _z**2);
-    if(p2.index == this.index)
-      dist = Infinity;
+    dist = Math.sqrt(_x**2 + _y**2 + _z**2);
     this._x = _x; this._y = _y; this._z = _z;
-    var r = this.distanceTo(p2, boxLength);
+
+   }
+    
+    
+    var r = 0;
     r = dist;
     var ljcut = (2**(1/6))*sigma;
     var xforce = 0, yforce = 0, zforce = 0;
-    // console.log("dist annd ljcut", r, p2.index);
-    if (r < ljcut) {
-       xforce =  (48 * epsilon * this._x) * ((sigma / r) ** 12 - 0.5*(sigma/r)**6)/(r**2)
+    if (r < sigma){r = sigma;}
+
+    if (r < ljcut && this.isForceCalculated[this.index][p2.index] == false) {
+       xforce =  (48 * epsilon * this._x) * ((sigma / r) ** 12 - 0.5*(sigma/r)**6)/(r**2);
        //(48*eps*xr(i,j)*((sig/r(i,j))**12 - 0.5*(sig/r(i,j))**6))/(r(i,j)**2)
-       yforce =  (48 * epsilon * this._y) * ((sigma / r) ** 12 - 0.5*(sigma/r)**6)/(r**2)
-       zforce =  (48 * epsilon * this._z) * ((sigma / r) ** 12 - 0.5*(sigma/r)**6)/(r**2)
+       yforce =  (48 * epsilon * this._y) * ((sigma / r) ** 12 - 0.5*(sigma/r)**6)/(r**2);
+       zforce =  (48 * epsilon * this._z) * ((sigma / r) ** 12 - 0.5*(sigma/r)**6)/(r**2);
       // console.log("updated accelaration is now", xforce);
-  
+       this.isForceCalculated[this.index][p2.index] = true;
+       this.isForceCalculated[p2.index][this.index] = true;
+       p2.isForceCalculated[this.index][p2.index] = true;
+       p2.isForceCalculated[p2.index][this.index] = true;
+    // console.log("dist annd ljcut", this.isForceCalculated[this.index][p2.index], this.index, p2.index);
+
+    }
+    else{
+      xforce = 0;
+      yforce = 0;
+      zforce = 0;
     }
     this.ax = this.ax + xforce;
-    p2.ax = p2.ax - xforce;
-    this.ay = this.ay + yforce;
-    p2.ay = p2.ay - yforce;
-    this.az = this.az + zforce;
-    p2.az = p2.az - zforce;
+       p2.ax = p2.ax - xforce;
+       this.ay = this.ay + yforce;
+       p2.ay = p2.ay - yforce;
+       this.az = this.az + zforce;
+       p2.az = p2.az - zforce;  
 
+       // 
+    // console.log("Current accelarations for ", this.index, p2.index, " are ", xforce, yforce, zforce, r);
+
+  },
+
+  display: function(){
+    console.log("Particle position is :", this.x, this.y, this.z);
+    console.log("Particle velocity is :", this.vx, this.vy, this.vz);
+    console.log("Particle acceleration is :", this.ax, this.ay, this.az);
   }
 };
